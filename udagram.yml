@@ -1,0 +1,85 @@
+Description: 'CloudFormation for Udagram'
+
+Parameters:
+    EnvironmentName:
+        Description: An environment name that will be prefixed to resource names
+        Type: String
+
+Resources:
+
+####################################################
+#                                                  #
+#                       NETWORK                    #
+#                                                  #
+####################################################
+
+Type: AWS::EC2::VPC
+Properties: 
+  CidrBlock: String
+  EnableDnsHostnames: Boolean
+  EnableDnsSupport: Boolean
+  InstanceTenancy: String
+  Tags: 
+    - Tag
+
+####################################################
+#                                                  #
+#                       SERVERS                    #
+#                                                  #
+####################################################
+
+# SERVER PERMISSIONS
+
+    UdagramIAMRole:
+        Type: AWS::IAM::Role
+        Properties: 
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                - Effect: allow
+                  Principal:
+                    Service:
+                    - ec2.amazonaws.com
+                  Action:
+                  - 'sts:AssumeRole'
+            Description: IAM Role to allow for Udagram to access s3 buckets
+            Path: /
+            Policies: 
+                - PolicyName: Udagrams3Policy
+                  PolicyDocument:
+                    Version: '2012-10-17'
+                    Statement:
+                    - Effect: Allow
+                      Action:
+                      - s3:Get*
+                      - s3:List*
+                      Resource: "arn:aws:s3:::udacity-demo-1"
+            RoleName: UdacityS3ReadOnlyEC2
+            Tags:
+                - Key: Name
+                  Value: !Ref EnvironmentName
+
+    UdagramIAMProfile:
+        Type: AWS::IAM::InstanceProfile
+        Properties:
+            Path: /
+            Roles:
+            - !Ref UdagramIAMRole
+
+# SERVER BLUEPRINT
+
+    UdagramLC:
+        Type: AWS::AutoScaling::LaunchConfiguration
+        Properties: 
+            IamInstanceProfile: !Ref UdagramIAMProfile
+            ImageId: ami-02701bcdc5509e57b
+            InstanceType: t2.medium
+            # REMOVE KEY IN PRODUCTION
+            KeyName: UdagramKey
+            LaunchConfigurationName: !Sub ${EnvironmentName} Launch Configuration
+            # ADD SECURITY GROUP(S)
+            #SecurityGroups: 
+            #    - String
+            # ADD USER SCRIPT FOR START-UP    
+            #UserData: String
+
