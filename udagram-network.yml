@@ -47,12 +47,12 @@ Parameters:
     UdagramPrivateSubnet1CIDR:
         Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
         Type: String
-        Default: 10.0.0.0/24
+        Default: 10.0.2.0/24
 
     UdagramPrivateSubnet2CIDR:
         Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
         Type: String
-        Default: 10.0.1.0/24
+        Default: 10.0.3.0/24
 
 ######################################################################################
 #                                                                                    #

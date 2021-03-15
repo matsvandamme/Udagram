@@ -67,7 +67,7 @@ Resources:
                       Action:
                       - s3:Get*
                       - s3:List*
-                      Resource: "arn:aws:s3:::udacity-demo-1"
+                      Resource: "arn:aws:s3:::udacity-demo-1/*"
             RoleName: UdacityS3ReadOnlyEC2
             Tags:
                 - Key: Name
@@ -121,8 +121,8 @@ Resources:
               CidrIp: 0.0.0.0/0
             SecurityGroupEgress:
             - IpProtocol: tcp
-              FromPort: 80
-              ToPort: 80
+              FromPort: 0
+              ToPort: 65535
               CidrIp: 0.0.0.0/0
 
 # SERVER LAUNCH CONFIG
@@ -143,15 +143,15 @@ Resources:
                   Ebs: 
                     VolumeSize: 15
             UserData:
-                Fn::Base64:
+                Fn::Base64: !Sub |
                     #!/bin/bash
-                    apt-get update -y
-                    apt-get install unzip awscli -y
-                    apt-get install apache2 -y
-                    systemctl start apache2.service
+                    apt update -y
+                    apt install unzip awscli -y
+                    apt install apache2 -y
                     cd /var/www/html
                     aws s3 cp s3://udacity-demo-1/udacity.zip .
                     unzip -o udacity.zip
+                    systemctl start apache2.service
 
 # AUTO SCALING GROUP and TARGET GROUP
 
@@ -161,8 +161,8 @@ Resources:
             LaunchConfigurationName: !Ref UdagramLaunchConfiguration
             MaxSize: '1'
             MinSize: '1'
-            # TargetGroupARNs:
-            # CREATE TARGET GROUP FOR AUTO SCALING GROUP
+            TargetGroupARNs:
+            - Ref: UdagramTargetGroup
             VPCZoneIdentifier:
             # CHANGE TO PRIVATE SUBNETS IN PRODUCTION
                 - Fn::ImportValue:
