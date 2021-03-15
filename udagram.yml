@@ -68,7 +68,7 @@ Resources:
           - Key: Name
             Value: !Ref EnvironmentName
 
-# SPAWN INTERNET GATEWAY
+# INTERNET GATEWAY
 
     UdagramInternetGateway:
       Type: AWS::EC2::InternetGateway
@@ -77,7 +77,7 @@ Resources:
           - Key: Name
             Value: !Ref EnvironmentName
 
-# SPAWN INTERNET GATEWAY ATTACHMENT TO VPC
+# INTERNET GATEWAY ATTACHMENT TO VPC
 
     UdagramInternetGatewayAttachment:
       Type: AWS::EC2::VPCGatewayAttachment
@@ -85,7 +85,7 @@ Resources:
         InternetGatewayId: !Ref UdagramInternetGateway
         VpcId: !Ref UdagramVirtualPrivateCloud
 
-# SPAWN PUBLIC SUBNETS
+# PUBLIC SUBNETS
 
     UdagramPublicSubnet1: 
       Type: AWS::EC2::Subnet
@@ -109,7 +109,7 @@ Resources:
               - Key: Name 
                 Value: !Sub ${EnvironmentName} Public Subnet (AZ2)
 
-# SPAWN PRIVATE SUBNETS
+# PRIVATE SUBNETS
 
     UdagramPrivateSubnet1: 
         Type: AWS::EC2::Subnet
@@ -133,7 +133,7 @@ Resources:
                 - Key: Name 
                   Value: !Sub ${EnvironmentName} Private Subnet (AZ2)
 
-# SPAWN PUBLIC ROUTE TABLE
+# PUBLIC ROUTE TABLE
 
     UdagramPublicRouteTable:
         Type: AWS::EC2::RouteTable
@@ -163,7 +163,7 @@ Resources:
             RouteTableId: !Ref UdagramPublicRouteTable
             SubnetId: !Ref UdagramPublicSubnet2
 
-# SPAWN PRIVATE ROUTE TABLES
+# PRIVATE ROUTE TABLES
 
     UdagramPrivateRouteTable1:
         Type: AWS::EC2::RouteTable
@@ -187,7 +187,7 @@ Resources:
 #                                                                                    #
 ######################################################################################
 
-# SPAWN SERVER IAM ROLE
+# SERVER IAM ROLE
 
     UdagramIAMRole:
         Type: AWS::IAM::Role
@@ -218,7 +218,7 @@ Resources:
                 - Key: Name
                   Value: !Ref EnvironmentName
 
-# SPAWN IAM INSTANCE PROFILE BASED ON SERVER ROLE
+# IAM INSTANCE PROFILE BASED ON SERVER ROLE
 
     UdagramIAMProfile:
         Type: AWS::IAM::InstanceProfile
@@ -227,7 +227,7 @@ Resources:
             Roles:
             - !Ref UdagramIAMRole
 
-# SPAWN UDAGRAM SERVER SECURITY GROUPS
+# SERVER SECURITY GROUPS
 
     UdagramServerSecGroup:
         Type: AWS::EC2::SecurityGroup
@@ -266,7 +266,7 @@ Resources:
               ToPort: 80
               CidrIp: 0.0.0.0/0
 
-# SERVER BLUEPRINT
+# SERVER LAUNCH CONFIG
 
     UdagramLaunchConfiguration:
         Type: AWS::AutoScaling::LaunchConfiguration
@@ -278,9 +278,13 @@ Resources:
             KeyName: UdagramKey
             LaunchConfigurationName: !Sub ${EnvironmentName} Launch Configuration
             SecurityGroups: 
-                - !Ref UdagramServerSecGroup 
+                - !Ref UdagramServerSecGroup
+            BlockDeviceMappings:
+                - DeviceName: "/dev/sdk"
+                  Ebs: 
+                    VolumeSize: 15
             UserData:
-                Fn::Base64: !Sub
+                Fn::Base64:
                     #!/bin/bash
                     apt-get update -y
                     apt-get install unzip awscli -y
@@ -289,4 +293,8 @@ Resources:
                     cd /var/www/html
                     aws s3 cp s3://udacity-demo-1/udacity.zip .
                     unzip -o udacity.zip
+
+# AUTO SCALING GROUP
+
+
 
