@@ -1,0 +1,156 @@
+# .___  ___.      ___   .___________.___________. __    __   __   _______  __    __  
+# |   \/   |     /   \  |           |           ||  |  |  | |  | |   ____||  |  |  | 
+# |  \  /  |    /  ^  \ `---|  |----`---|  |----`|  |__|  | |  | |  |__   |  |  |  | 
+# |  |\/|  |   /  /_\  \    |  |        |  |     |   __   | |  | |   __|  |  |  |  | 
+# |  |  |  |  /  _____  \   |  |        |  |     |  |  |  | |  | |  |____ |  `--'  | 
+# |__|  |__| /__/     \__\  |__|        |__|     |__|  |__| |__| |_______| \______/  
+
+# 888     888 8888888b.        d8888  .d8888b.  8888888b.         d8888 888b     d888 
+# 888     888 888  "Y88b      d88888 d88P  Y88b 888   Y88b       d88888 8888b   d8888 
+# 888     888 888    888     d88P888 888    888 888    888      d88P888 88888b.d88888 
+# 888     888 888    888    d88P 888 888        888   d88P     d88P 888 888Y88888P888 
+# 888     888 888    888   d88P  888 888  88888 8888888P"     d88P  888 888 Y888P 888 
+# 888     888 888    888  d88P   888 888    888 888 T88b     d88P   888 888  Y8P  888 
+# Y88b. .d88P 888  .d88P d8888888888 Y88b  d88P 888  T88b   d8888888888 888   "   888 
+#  "Y88888P"  8888888P" d88P     888  "Y8888P88 888   T88b d88P     888 888       888
+                                                                     
+#      _________    _  _   ___ ____    _____ ___     ___  _    ___  _ 
+#   _ |___ |___ \  | || | / _ |___ \  |___  ( _ )   / _ \/ |  / _ \/ |
+# _| |_ |_ \ __) | | || || (_) |__) |    / // _ \  | (_) | | | | | | |
+#|_   ____) / __/  |__   _\__, / __/    / /| (_) |  \__, | | | |_| | |
+#  |_||____|_____|    |_|   /_|_____|  /_/  \___/     /_/|_|  \___/|_|
+
+Description: 'CloudFormation server cluster for Udagram'
+
+######################################################################################
+#                                                                                    #
+#                                      PARAMETERS                                    #
+#                                                                                    #
+######################################################################################
+
+Parameters:
+
+    EnvironmentName:
+        Description: An environment name that will be prefixed to resource names
+        Type: String
+
+######################################################################################
+#                                                                                    #
+#                                      SERVERS                                       #
+#                                                                                    #
+######################################################################################
+
+Resources:
+
+# SERVER IAM ROLE
+
+    UdagramIAMRole:
+        Type: AWS::IAM::Role
+        Properties: 
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                - Effect: allow
+                  Principal:
+                    Service:
+                    - ec2.amazonaws.com
+                  Action:
+                  - 'sts:AssumeRole'
+            Description: IAM Role to allow for Udagram to access s3 buckets
+            Path: /
+            Policies: 
+                - PolicyName: Udagrams3Policy
+                  PolicyDocument:
+                    Version: '2012-10-17'
+                    Statement:
+                    - Effect: Allow
+                      Action:
+                      - s3:Get*
+                      - s3:List*
+                      Resource: "arn:aws:s3:::udacity-demo-1"
+            RoleName: UdacityS3ReadOnlyEC2
+            Tags:
+                - Key: Name
+                  Value: !Ref EnvironmentName
+
+# IAM INSTANCE PROFILE BASED ON SERVER ROLE
+
+    UdagramIAMProfile:
+        Type: AWS::IAM::InstanceProfile
+        Properties:
+            Path: /
+            Roles:
+            - !Ref UdagramIAMRole
+
+# SERVER SECURITY GROUPS
+
+    UdagramServerSecGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: Allow http and ssh
+            VpcId:
+                Fn::ImportValue: 
+                    !Sub "${EnvironmentName}-VPCID"
+            SecurityGroupIngress:
+            - IpProtocol: tcp
+              FromPort: 80
+              ToPort: 80
+              CidrIp: 0.0.0.0/0
+              # REMOVE SSH IN PRODUCTION
+            - IpProtocol: tcp
+              FromPort: 22
+              ToPort: 22
+              CidrIp: 0.0.0.0/0
+            SecurityGroupEgress:
+            - IpProtocol: tcp
+              FromPort: 0
+              ToPort: 65535
+              CidrIp: 0.0.0.0/0
+
+    LBSecGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: Allow http to the load balancer
+            VpcId:
+                Fn::ImportValue:
+                    !Sub ${EnvironmentName}-VPCID
+            SecurityGroupIngress:
+            - IpProtocol: tcp
+              FromPort: 80
+              ToPort: 80
+              CidrIp: 0.0.0.0/0
+            SecurityGroupEgress:
+            - IpProtocol: tcp
+              FromPort: 80
+              ToPort: 80
+              CidrIp: 0.0.0.0/0
+
+# SERVER LAUNCH CONFIG
+
+    UdagramLaunchConfiguration:
+        Type: AWS::AutoScaling::LaunchConfiguration
+        Properties: 
+            IamInstanceProfile: !Ref UdagramIAMProfile
+            ImageId: ami-02701bcdc5509e57b
+            InstanceType: t2.medium
+            # REMOVE KEY IN PRODUCTION
+            KeyName: UdagramKey
+            LaunchConfigurationName: !Sub ${EnvironmentName} Launch Configuration
+            SecurityGroups: 
+                - !Ref UdagramServerSecGroup
+            BlockDeviceMappings:
+                - DeviceName: "/dev/sdk"
+                  Ebs: 
+                    VolumeSize: 15
+            UserData:
+                Fn::Base64:
+                    #!/bin/bash
+                    apt-get update -y
+                    apt-get install unzip awscli -y
+                    apt-get install apache2 -y
+                    systemctl start apache2.service
+                    cd /var/www/html
+                    aws s3 cp s3://udacity-demo-1/udacity.zip .
+                    unzip -o udacity.zip
+
+# AUTO SCALING GROUP
