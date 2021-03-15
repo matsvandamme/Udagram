@@ -51,11 +51,11 @@ Parameters:
 
 Resources:
 
-####################################################
-#                                                  #
-#                       NETWORK                    #
-#                                                  #
-####################################################
+######################################################################################
+#                                                                                    #
+#                                      NETWORK                                       #
+#                                                                                    #
+######################################################################################
 
 # SPAWN VPC
 
@@ -141,7 +141,7 @@ Resources:
             VpcId: !Ref UdagramVirtualPrivateCloud
             Tags: 
                 - Key: Name 
-                  Value: !Sub ${EnvironmentName} Public Routes
+                  Value: !Sub ${EnvironmentName} Public Route Table
 
     UdagramDefaultPublicRoute: 
         Type: AWS::EC2::Route
@@ -163,15 +163,29 @@ Resources:
             RouteTableId: !Ref UdagramPublicRouteTable
             SubnetId: !Ref UdagramPublicSubnet2
 
-# SPAWN PRIVATE ROUTE TABLE
+# SPAWN PRIVATE ROUTE TABLES
 
+    UdagramPrivateRouteTable1:
+        Type: AWS::EC2::RouteTable
+        Properties: 
+            VpcId: !Ref UdagramVirtualPrivateCloud
+            Tags: 
+                - Key: Name 
+                  Value: !Sub ${EnvironmentName} Private Route Table 1
 
+    UdagramPrivateRouteTable2:
+        Type: AWS::EC2::RouteTable
+        Properties: 
+            VpcId: !Ref UdagramVirtualPrivateCloud
+            Tags: 
+                - Key: Name 
+                  Value: !Sub ${EnvironmentName} Private Route Table 2
 
-####################################################
-#                                                  #
-#                       SERVERS                    #
-#                                                  #
-####################################################
+######################################################################################
+#                                                                                    #
+#                                      SERVERS                                       #
+#                                                                                    #
+######################################################################################
 
 # SPAWN SERVER IAM ROLE
 
