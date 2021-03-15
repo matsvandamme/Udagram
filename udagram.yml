@@ -1,3 +1,26 @@
+# .___  ___.      ___   .___________.___________. __    __   __   _______  __    __  
+# |   \/   |     /   \  |           |           ||  |  |  | |  | |   ____||  |  |  | 
+# |  \  /  |    /  ^  \ `---|  |----`---|  |----`|  |__|  | |  | |  |__   |  |  |  | 
+# |  |\/|  |   /  /_\  \    |  |        |  |     |   __   | |  | |   __|  |  |  |  | 
+# |  |  |  |  /  _____  \   |  |        |  |     |  |  |  | |  | |  |____ |  `--'  | 
+# |__|  |__| /__/     \__\  |__|        |__|     |__|  |__| |__| |_______| \______/  
+
+# 888     888 8888888b.        d8888  .d8888b.  8888888b.         d8888 888b     d888 
+# 888     888 888  "Y88b      d88888 d88P  Y88b 888   Y88b       d88888 8888b   d8888 
+# 888     888 888    888     d88P888 888    888 888    888      d88P888 88888b.d88888 
+# 888     888 888    888    d88P 888 888        888   d88P     d88P 888 888Y88888P888 
+# 888     888 888    888   d88P  888 888  88888 8888888P"     d88P  888 888 Y888P 888 
+# 888     888 888    888  d88P   888 888    888 888 T88b     d88P   888 888  Y8P  888 
+# Y88b. .d88P 888  .d88P d8888888888 Y88b  d88P 888  T88b   d8888888888 888   "   888 
+#  "Y88888P"  8888888P" d88P     888  "Y8888P88 888   T88b d88P     888 888       888
+                                                                     
+#      _________    _  _   ___ ____    _____ ___     ___  _    ___  _ 
+#   _ |___ |___ \  | || | / _ |___ \  |___  ( _ )   / _ \/ |  / _ \/ |
+# _| |_ |_ \ __) | | || || (_) |__) |    / // _ \  | (_) | | | | | | |
+#|_   ____) / __/  |__   _\__, / __/    / /| (_) |  \__, | | | |_| | |
+#  |_||____|_____|    |_|   /_|_____|  /_/  \___/     /_/|_|  \___/|_|
+
+
 Description: 'CloudFormation for Udagram'
 
 Parameters:
@@ -12,6 +35,16 @@ Parameters:
         Default: 10.0.0.0/24
 
     UdagramPublicSubnet2CIDR:
+        Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
+        Type: String
+        Default: 10.0.1.0/24
+
+    UdagramPrivateSubnet1CIDR:
+        Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
+        Type: String
+        Default: 10.0.0.0/24
+
+    UdagramPrivateSubnet2CIDR:
         Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
         Type: String
         Default: 10.0.1.0/24
@@ -81,9 +114,9 @@ Resources:
     UdagramPrivateSubnet1: 
         Type: AWS::EC2::Subnet
         Properties:
-            VpcId: !Ref VPC
+            VpcId: !Ref UdagramVirtualPrivateCloud
             AvailabilityZone: !Select [ 0, !GetAZs '' ]
-            CidrBlock: !Ref PrivateSubnet1CIDR
+            CidrBlock: !Ref UdagramPrivateSubnet1CIDR
             MapPublicIpOnLaunch: false
             Tags: 
                 - Key: Name 
@@ -92,13 +125,47 @@ Resources:
     UdagramPrivateSubnet2: 
         Type: AWS::EC2::Subnet
         Properties:
-            VpcId: !Ref VPC
+            VpcId: !Ref UdagramVirtualPrivateCloud
             AvailabilityZone: !Select [ 1, !GetAZs '' ]
-            CidrBlock: !Ref PrivateSubnet2CIDR
+            CidrBlock: !Ref UdagramPrivateSubnet2CIDR
             MapPublicIpOnLaunch: false
             Tags: 
                 - Key: Name 
                   Value: !Sub ${EnvironmentName} Private Subnet (AZ2)
+
+# SPAWN PUBLIC ROUTE TABLE
+
+    UdagramPublicRouteTable:
+        Type: AWS::EC2::RouteTable
+        Properties: 
+            VpcId: !Ref UdagramVirtualPrivateCloud
+            Tags: 
+                - Key: Name 
+                  Value: !Sub ${EnvironmentName} Public Routes
+
+    UdagramDefaultPublicRoute: 
+        Type: AWS::EC2::Route
+        DependsOn: UdagramInternetGatewayAttachment
+        Properties: 
+            RouteTableId: !Ref UdagramPublicRouteTable
+            DestinationCidrBlock: 0.0.0.0/0
+            GatewayId: !Ref UdagramInternetGateway
+
+    UdagramPublicSubnet1RouteTableAssociation:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            RouteTableId: !Ref UdagramPublicRouteTable
+            SubnetId: !Ref UdagramPublicSubnet1
+
+    UdagramPublicSubnet2RouteTableAssociation:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            RouteTableId: !Ref UdagramPublicRouteTable
+            SubnetId: !Ref UdagramPublicSubnet2
+
+# SPAWN PRIVATE ROUTE TABLE
+
+
 
 ####################################################
 #                                                  #
