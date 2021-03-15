@@ -232,39 +232,39 @@ Resources:
     UdagramServerSecGroup:
         Type: AWS::EC2::SecurityGroup
         Properties:
-        GroupDescription: Allow http and ssh
-        VpcId: !Ref UdagramVirtualPrivateCloud
-        SecurityGroupIngress:
-        - IpProtocol: tcp
-            FromPort: 80
-            ToPort: 80
-            CidrIp: 0.0.0.0/0
-            # REMOVE SSH IN PRODUCTION
-        - IpProtocol: tcp
-            FromPort: 22
-            ToPort: 22
-            CidrIp: 0.0.0.0/0
-        SecurityGroupEgress:
-        - IpProtocol: tcp
-            FromPort: 0
-            ToPort: 65535
-            CidrIp: 0.0.0.0/0
+            GroupDescription: Allow http and ssh
+            VpcId: !Ref UdagramVirtualPrivateCloud
+            SecurityGroupIngress:
+            - IpProtocol: tcp
+              FromPort: 80
+              ToPort: 80
+              CidrIp: 0.0.0.0/0
+              # REMOVE SSH IN PRODUCTION
+            - IpProtocol: tcp
+              FromPort: 22
+              ToPort: 22
+              CidrIp: 0.0.0.0/0
+            SecurityGroupEgress:
+            - IpProtocol: tcp
+              FromPort: 0
+              ToPort: 65535
+              CidrIp: 0.0.0.0/0
 
     LBSecGroup:
         Type: AWS::EC2::SecurityGroup
         Properties:
-        GroupDescription: Allow http to the load balancer
-        VpcId: !Ref UdagramVirtualPrivateCloud
-        SecurityGroupIngress:
-        - IpProtocol: tcp
-            FromPort: 80
-            ToPort: 80
-            CidrIp: 0.0.0.0/0
-        SecurityGroupEgress:
-        - IpProtocol: tcp
-            FromPort: 80
-            ToPort: 80
-            CidrIp: 0.0.0.0/0
+            GroupDescription: Allow http to the load balancer
+            VpcId: !Ref UdagramVirtualPrivateCloud
+            SecurityGroupIngress:
+            - IpProtocol: tcp
+              FromPort: 80
+              ToPort: 80
+              CidrIp: 0.0.0.0/0
+            SecurityGroupEgress:
+            - IpProtocol: tcp
+              FromPort: 80
+              ToPort: 80
+              CidrIp: 0.0.0.0/0
 
 # SERVER BLUEPRINT
 
@@ -277,7 +277,8 @@ Resources:
             # REMOVE KEY IN PRODUCTION
             KeyName: UdagramKey
             LaunchConfigurationName: !Sub ${EnvironmentName} Launch Configuration
-            SecurityGroups: !Ref UdagramServerSecGroup 
+            SecurityGroups: 
+                - !Ref UdagramServerSecGroup 
             UserData:
                 Fn::Base64: !Sub
                     #!/bin/bash
