@@ -1,9 +1,20 @@
 Description: 'CloudFormation for Udagram'
 
 Parameters:
+
     EnvironmentName:
         Description: An environment name that will be prefixed to resource names
         Type: String
+
+    UdagramPublicSubnet1CIDR:
+        Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
+        Type: String
+        Default: 10.0.0.0/24
+
+    UdagramPublicSubnet2CIDR:
+        Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
+        Type: String
+        Default: 10.0.1.0/24
 
 Resources:
 
@@ -13,14 +24,81 @@ Resources:
 #                                                  #
 ####################################################
 
-Type: AWS::EC2::VPC
-Properties: 
-  CidrBlock: String
-  EnableDnsHostnames: Boolean
-  EnableDnsSupport: Boolean
-  InstanceTenancy: String
-  Tags: 
-    - Tag
+# SPAWN VPC
+
+    UdagramVirtualPrivateCloud:
+      Type: AWS::EC2::VPC
+      Properties: 
+        CidrBlock: 10.0.0.0/16
+        EnableDnsHostnames: true
+        Tags:
+          - Key: Name
+            Value: !Ref EnvironmentName
+
+# SPAWN INTERNET GATEWAY
+
+    UdagramInternetGateway:
+      Type: AWS::EC2::InternetGateway
+      Properties: 
+        Tags:
+          - Key: Name
+            Value: !Ref EnvironmentName
+
+# SPAWN INTERNET GATEWAY ATTACHMENT TO VPC
+
+    UdagramInternetGatewayAttachment:
+      Type: AWS::EC2::VPCGatewayAttachment
+      Properties: 
+        InternetGatewayId: !Ref UdagramInternetGateway
+        VpcId: !Ref UdagramVirtualPrivateCloud
+
+# SPAWN PUBLIC SUBNETS
+
+    UdagramPublicSubnet1: 
+      Type: AWS::EC2::Subnet
+      Properties:
+          VpcId: !Ref UdagramVirtualPrivateCloud
+          AvailabilityZone: !Select [ 0, !GetAZs '' ]
+          CidrBlock: !Ref UdagramPublicSubnet1CIDR
+          MapPublicIpOnLaunch: true
+          Tags: 
+              - Key: Name 
+                Value: !Sub ${EnvironmentName} Public Subnet (AZ1)
+
+    UdagramPublicSubnet2: 
+      Type: AWS::EC2::Subnet
+      Properties:
+          VpcId: !Ref UdagramVirtualPrivateCloud
+          AvailabilityZone: !Select [ 1, !GetAZs '' ]
+          CidrBlock: !Ref UdagramPublicSubnet2CIDR
+          MapPublicIpOnLaunch: true
+          Tags: 
+              - Key: Name 
+                Value: !Sub ${EnvironmentName} Public Subnet (AZ2)
+
+# SPAWN PRIVATE SUBNETS
+
+    UdagramPrivateSubnet1: 
+        Type: AWS::EC2::Subnet
+        Properties:
+            VpcId: !Ref VPC
+            AvailabilityZone: !Select [ 0, !GetAZs '' ]
+            CidrBlock: !Ref PrivateSubnet1CIDR
+            MapPublicIpOnLaunch: false
+            Tags: 
+                - Key: Name 
+                  Value: !Sub ${EnvironmentName} Private Subnet (AZ1)
+
+    UdagramPrivateSubnet2: 
+        Type: AWS::EC2::Subnet
+        Properties:
+            VpcId: !Ref VPC
+            AvailabilityZone: !Select [ 1, !GetAZs '' ]
+            CidrBlock: !Ref PrivateSubnet2CIDR
+            MapPublicIpOnLaunch: false
+            Tags: 
+                - Key: Name 
+                  Value: !Sub ${EnvironmentName} Private Subnet (AZ2)
 
 ####################################################
 #                                                  #
@@ -28,7 +106,7 @@ Properties:
 #                                                  #
 ####################################################
 
-# SERVER PERMISSIONS
+# SPAWN SERVER IAM ROLE
 
     UdagramIAMRole:
         Type: AWS::IAM::Role
@@ -59,6 +137,8 @@ Properties:
                 - Key: Name
                   Value: !Ref EnvironmentName
 
+# SPAWN IAM INSTANCE PROFILE BASED ON SERVER ROLE
+
     UdagramIAMProfile:
         Type: AWS::IAM::InstanceProfile
         Properties:
@@ -68,7 +148,7 @@ Properties:
 
 # SERVER BLUEPRINT
 
-    UdagramLC:
+    UdagramLaunchConfiguration:
         Type: AWS::AutoScaling::LaunchConfiguration
         Properties: 
             IamInstanceProfile: !Ref UdagramIAMProfile
