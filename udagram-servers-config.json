@@ -2,5 +2,29 @@
 	{
 		"ParameterKey": "EnvironmentName",
 		"ParameterValue": "Udagram"
+	},
+	{
+		"ParameterKey": "ApachePort",
+		"ParameterValue": 80
+	},
+	{
+		"ParameterKey": "AMIImage",
+		"ParameterValue": "ami-02701bcdc5509e57b"
+	},
+	{
+		"ParameterKey": "LaunchInstance",
+		"ParameterValue": "t2.medium"
+	},
+	{
+		"ParameterKey": "DiskVolume",
+		"ParameterValue": 15
+	},
+	{
+		"ParameterKey": "GroupMinSize",
+		"ParameterValue": "4"
+	},
+	{
+		"ParameterKey": "GroupMaxSize",
+		"ParameterValue": "10"
 	}
 ]

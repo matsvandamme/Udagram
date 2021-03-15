@@ -34,6 +34,11 @@ Parameters:
         Description: An environment name that will be prefixed to resource names
         Type: String
 
+    VPCCIDR:
+        Description: Please enter the IP range (CIDR notation) for the VPC
+        Type: String
+        Default: 10.0.0.0/16
+
     UdagramPublicSubnet1CIDR:
         Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
         Type: String
@@ -67,7 +72,7 @@ Resources:
     UdagramVirtualPrivateCloud:
       Type: AWS::EC2::VPC
       Properties: 
-        CidrBlock: 10.0.0.0/16
+        CidrBlock: !Ref VPCCIDR
         EnableDnsHostnames: true
         Tags:
           - Key: Name
@@ -186,6 +191,12 @@ Resources:
                 - Key: Name 
                   Value: !Sub ${EnvironmentName} Private Route Table 2
 
+######################################################################################
+#                                                                                    #
+#                                      OUTPUTS                                       #
+#                                                                                    #
+######################################################################################
+
 Outputs: 
 
     VPC: 
@@ -199,6 +210,12 @@ Outputs:
         Value: !Join [ ",", [ !Ref UdagramPublicSubnet1, !Ref UdagramPublicSubnet2 ]]
         Export:
           Name: !Sub ${EnvironmentName}-PUB-NETS
+
+    PublicSubnets:
+        Description: A list of the private subnets
+        Value: !Join [ ",", [ !Ref UdagramPrivateSubnet1, !Ref UdagramPrivateubnet2 ]]
+        Export:
+          Name: !Sub ${EnvironmentName}-PRI-NETS
 
     PublicSubnet1:
         Description: A reference to the public subnet in the 1st Availability Zone

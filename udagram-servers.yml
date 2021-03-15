@@ -34,6 +34,33 @@ Parameters:
         Description: An environment name that will be prefixed to resource names
         Type: String
 
+    ApachePort:
+        Description: Port used by Apache
+        Type: Integer
+        Default: 80
+
+    AMIImage:
+        Description: AMI used in Launch Configuration 
+        Type: String
+
+    InstanceType:
+        Description: Instance type used in Launch Configuration
+        Type: String
+
+    DiskVolume:
+        Description: Disk volume (in GB) used in Launch Configuration
+        Type: Integer
+
+    GroupMinSize:
+        Description: Minimum amount of instances in Auto Scaling Group
+        Type: String
+        Default: "1"
+
+    GroupMaxSize:
+        Description: Maximum amount of instances in Auto Scaling Group
+        Type: String
+        Default: "1"
+
 ######################################################################################
 #                                                                                    #
 #                                      SERVERS                                       #
@@ -93,8 +120,8 @@ Resources:
                     !Sub "${EnvironmentName}-VPCID"
             SecurityGroupIngress:
             - IpProtocol: tcp
-              FromPort: 80
-              ToPort: 80
+              FromPort: !Ref ApachePort
+              ToPort: !Ref ApachePort
               CidrIp: 0.0.0.0/0
               # REMOVE SSH IN PRODUCTION
             - IpProtocol: tcp
@@ -116,8 +143,8 @@ Resources:
                     !Sub ${EnvironmentName}-VPCID
             SecurityGroupIngress:
             - IpProtocol: tcp
-              FromPort: 80
-              ToPort: 80
+              FromPort: !Ref ApachePort
+              ToPort: !Ref ApachePort
               CidrIp: 0.0.0.0/0
             SecurityGroupEgress:
             - IpProtocol: tcp
@@ -131,8 +158,8 @@ Resources:
         Type: AWS::AutoScaling::LaunchConfiguration
         Properties: 
             IamInstanceProfile: !Ref UdagramIAMProfile
-            ImageId: ami-02701bcdc5509e57b
-            InstanceType: t2.medium
+            ImageId: !Ref AMIImage
+            InstanceType: !Ref LaunchInstance
             # REMOVE KEY IN PRODUCTION
             KeyName: UdagramKey
             LaunchConfigurationName: !Sub ${EnvironmentName} Launch Configuration
@@ -141,7 +168,7 @@ Resources:
             BlockDeviceMappings:
                 - DeviceName: "/dev/sdk"
                   Ebs: 
-                    VolumeSize: 15
+                    VolumeSize: !Ref DiskVolume
             UserData:
                 Fn::Base64: !Sub |
                     #!/bin/bash
@@ -159,8 +186,8 @@ Resources:
         Type: AWS::AutoScaling::AutoScalingGroup
         Properties:
             LaunchConfigurationName: !Ref UdagramLaunchConfiguration
-            MaxSize: '1'
-            MinSize: '1'
+            MaxSize: !Ref GroupMaxSize
+            MinSize: !Ref GroupMinSize
             TargetGroupARNs:
             - Ref: UdagramTargetGroup
             VPCZoneIdentifier:
@@ -173,11 +200,11 @@ Resources:
         Properties: 
             HealthCheckIntervalSeconds: 10
             HealthCheckPath: /
-            HealthCheckPort: 80
+            HealthCheckPort: !Ref ApachePort
             HealthCheckProtocol: HTTP
             HealthCheckTimeoutSeconds: 8
             HealthyThresholdCount: 2
-            Port: 80
+            Port: !Ref ApachePort
             Protocol: HTTP
             Tags:
                 - Key: Name
@@ -201,3 +228,19 @@ Resources:
             Tags:
                 - Key: Name
                   Value: !Ref EnvironmentName
+
+######################################################################################
+#                                                                                    #
+#                                      OUTPUTS                                       #
+#                                                                                    #
+######################################################################################
+
+Outputs:
+
+    InstanceRole:
+            Description: The Role ID used by the instances
+            Value: !GetAtt UdagramIAMRole.RoleId
+
+    LoadBalancerDNSName:
+            Description: The DNS Name of the load balancer
+            Value: !!GetAtt UdagramLoadBalancer.DNSName

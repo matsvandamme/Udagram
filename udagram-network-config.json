@@ -4,6 +4,10 @@
 		"ParameterValue": "Udagram"
 	},
 	{
+		"ParameterKey": "VPCCIDR",
+		"ParameterValue": "10.0.0.0/16"
+	},
+	{
 		"ParameterKey": "UdagramPublicSubnet1CIDR",
 		"ParameterValue": "10.0.0.0/24"
 	},
