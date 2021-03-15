@@ -153,4 +153,51 @@ Resources:
                     aws s3 cp s3://udacity-demo-1/udacity.zip .
                     unzip -o udacity.zip
 
-# AUTO SCALING GROUP
+# AUTO SCALING GROUP and TARGET GROUP
+
+    UdagramAutoScalingGroup:
+        Type: AWS::AutoScaling::AutoScalingGroup
+        Properties:
+            LaunchConfigurationName: !Ref UdagramLaunchConfiguration
+            MaxSize: '1'
+            MinSize: '1'
+            # TargetGroupARNs:
+            # CREATE TARGET GROUP FOR AUTO SCALING GROUP
+            VPCZoneIdentifier:
+            # CHANGE TO PRIVATE SUBNETS IN PRODUCTION
+                - Fn::ImportValue:
+                        !Sub "${EnvironmentName}-PUB-NETS"
+
+    UdagramTargetGroup:
+        Type: AWS::ElasticLoadBalancingV2::TargetGroup
+        Properties: 
+            HealthCheckIntervalSeconds: 10
+            HealthCheckPath: /
+            HealthCheckPort: 80
+            HealthCheckProtocol: HTTP
+            HealthCheckTimeoutSeconds: 8
+            HealthyThresholdCount: 2
+            Port: 80
+            Protocol: HTTP
+            Tags:
+                - Key: Name
+                  Value: !Ref EnvironmentName
+            UnhealthyThresholdCount: 5
+            VpcId: 
+                Fn::ImportValue: 
+                    !Sub "${EnvironmentName}-VPCID"
+
+# LOAD BALANCER
+
+    UdagramLoadBalancer:
+        Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+        Properties: 
+            SecurityGroups: 
+            - Ref: LBSecGroup
+            Subnets:
+            # CHANGE TO PRIVATE SUBNETS IN PRODUCTION
+            - Fn::ImportValue: !Sub "${EnvironmentName}-PUB1-SN"
+            - Fn::ImportValue: !Sub "${EnvironmentName}-PUB2-SN"
+            Tags:
+                - Key: Name
+                  Value: !Ref EnvironmentName

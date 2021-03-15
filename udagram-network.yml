@@ -194,4 +194,22 @@ Outputs:
         Export:
           Name: !Sub ${EnvironmentName}-VPCID
 
+    PublicSubnets:
+        Description: A list of the public subnets
+        Value: !Join [ ",", [ !Ref UdagramPublicSubnet1, !Ref UdagramPublicSubnet2 ]]
+        Export:
+          Name: !Sub ${EnvironmentName}-PUB-NETS
+
+    PublicSubnet1:
+        Description: A reference to the public subnet in the 1st Availability Zone
+        Value: !Ref UdagramPublicSubnet1
+        Export:
+          Name: !Sub ${EnvironmentName}-PUB1-SN
+
+    PublicSubnet2: 
+        Description: A reference to the public subnet in the 2nd Availability Zone
+        Value: !Ref UdagramPublicSubnet2
+        Export:
+          Name: !Sub ${EnvironmentName}-PUB2-SN
+
 
