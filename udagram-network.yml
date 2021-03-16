@@ -95,6 +95,32 @@ Resources:
         InternetGatewayId: !Ref UdagramInternetGateway
         VpcId: !Ref UdagramVirtualPrivateCloud
 
+# NAT GATEWAYS
+
+    NatGateway1EIP:
+        Type: AWS::EC2::EIP
+        DependsOn: UdagramInternetGatewayAttachment
+        Properties: 
+            Domain: vpc
+
+    NatGateway2EIP:
+        Type: AWS::EC2::EIP
+        DependsOn: UdagramInternetGatewayAttachment
+        Properties:
+            Domain: vpc
+
+    NatGateway1: 
+        Type: AWS::EC2::NatGateway
+        Properties: 
+            AllocationId: !GetAtt NatGateway1EIP.AllocationId
+            SubnetId: !Ref UdagramPublicSubnet1
+
+    NatGateway2: 
+        Type: AWS::EC2::NatGateway
+        Properties:
+            AllocationId: !GetAtt NatGateway2EIP.AllocationId
+            SubnetId: !Ref UdagramPublicSubnet2
+
 # PUBLIC SUBNETS
 
     UdagramPublicSubnet1: 
@@ -183,6 +209,19 @@ Resources:
                 - Key: Name 
                   Value: !Sub ${EnvironmentName} Private Route Table 1
 
+    UdagramDefaultPrivateRoute1:
+        Type: AWS::EC2::Route
+        Properties:
+            RouteTableId: !Ref UdagramPrivateRouteTable1
+            DestinationCidrBlock: 0.0.0.0/0
+            NatGatewayId: !Ref NatGateway1
+
+    UdagramPrivateSubnet1RouteTableAssociation:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            RouteTableId: !Ref UdagramPrivateRouteTable1
+            SubnetId: !Ref UdagramPrivateSubnet1
+
     UdagramPrivateRouteTable2:
         Type: AWS::EC2::RouteTable
         Properties: 
@@ -190,6 +229,19 @@ Resources:
             Tags: 
                 - Key: Name 
                   Value: !Sub ${EnvironmentName} Private Route Table 2
+
+    UdagramDefaultPrivateRoute2:
+        Type: AWS::EC2::Route
+        Properties:
+            RouteTableId: !Ref UdagramPrivateRouteTable2
+            DestinationCidrBlock: 0.0.0.0/0
+            NatGatewayId: !Ref NatGateway2
+
+    UdagramPrivateSubnet1RouteTableAssociation:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            RouteTableId: !Ref UdagramPrivateRouteTable2
+            SubnetId: !Ref UdagramPrivateSubnet2
 
 ######################################################################################
 #                                                                                    #
