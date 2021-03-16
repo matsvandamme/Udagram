@@ -36,8 +36,8 @@ Parameters:
 
     ApachePort:
         Description: Port used by Apache
-        Type: Integer
-        Default: 80
+        Type: String
+        Default: "80"
 
     AMIImage:
         Description: AMI used in Launch Configuration 
@@ -49,7 +49,7 @@ Parameters:
 
     DiskVolume:
         Description: Disk volume (in GB) used in Launch Configuration
-        Type: Integer
+        Type: String
 
     GroupMinSize:
         Description: Minimum amount of instances in Auto Scaling Group
@@ -123,11 +123,6 @@ Resources:
               FromPort: !Ref ApachePort
               ToPort: !Ref ApachePort
               CidrIp: 0.0.0.0/0
-              # REMOVE SSH IN PRODUCTION
-            - IpProtocol: tcp
-              FromPort: 22
-              ToPort: 22
-              CidrIp: 0.0.0.0/0
             SecurityGroupEgress:
             - IpProtocol: tcp
               FromPort: 0
@@ -159,9 +154,7 @@ Resources:
         Properties: 
             IamInstanceProfile: !Ref UdagramIAMProfile
             ImageId: !Ref AMIImage
-            InstanceType: !Ref LaunchInstance
-            # REMOVE KEY IN PRODUCTION
-            KeyName: UdagramKey
+            InstanceType: !Ref InstanceType
             LaunchConfigurationName: !Sub ${EnvironmentName} Launch Configuration
             SecurityGroups: 
                 - !Ref UdagramServerSecGroup
@@ -191,9 +184,8 @@ Resources:
             TargetGroupARNs:
             - Ref: UdagramTargetGroup
             VPCZoneIdentifier:
-            # CHANGE TO PRIVATE SUBNETS IN PRODUCTION
                 - Fn::ImportValue:
-                        !Sub "${EnvironmentName}-PUB-NETS"
+                        !Sub "${EnvironmentName}-PRI-NETS"
 
     UdagramTargetGroup:
         Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -213,6 +205,28 @@ Resources:
             VpcId: 
                 Fn::ImportValue: 
                     !Sub "${EnvironmentName}-VPCID"
+
+    UdagramListener:
+        Type: AWS::ElasticLoadBalancingV2::Listener
+        Properties: 
+            DefaultActions: 
+                - Type: forward
+                  TargetGroupArn: !Ref 'UdagramTargetGroup'
+            LoadBalancerArn: !Ref UdagramLoadBalancer
+            Port: !Ref ApachePort
+            Protocol: HTTP
+
+    UdagramListenerRule:
+        Type: AWS::ElasticLoadBalancingV2::ListenerRule
+        Properties: 
+            Actions: 
+                - Type: forward
+                  TargetGroupArn: !Ref 'UdagramTargetGroup'
+            Conditions: 
+                - Field: path-pattern
+                  Values: [/]
+            ListenerArn: !Ref UdagramListener
+            Priority: 1
 
 # LOAD BALANCER
 
@@ -243,4 +257,4 @@ Outputs:
 
     LoadBalancerDNSName:
             Description: The DNS Name of the load balancer
-            Value: !!GetAtt UdagramLoadBalancer.DNSName
+            Value: !GetAtt UdagramLoadBalancer.DNSName

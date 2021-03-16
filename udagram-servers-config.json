@@ -5,19 +5,19 @@
 	},
 	{
 		"ParameterKey": "ApachePort",
-		"ParameterValue": 80
+		"ParameterValue": "80"
 	},
 	{
 		"ParameterKey": "AMIImage",
 		"ParameterValue": "ami-02701bcdc5509e57b"
 	},
 	{
-		"ParameterKey": "LaunchInstance",
+		"ParameterKey": "InstanceType",
 		"ParameterValue": "t2.medium"
 	},
 	{
 		"ParameterKey": "DiskVolume",
-		"ParameterValue": 15
+		"ParameterValue": "15"
 	},
 	{
 		"ParameterKey": "GroupMinSize",

@@ -211,12 +211,6 @@ Outputs:
         Export:
           Name: !Sub ${EnvironmentName}-PUB-NETS
 
-    PublicSubnets:
-        Description: A list of the private subnets
-        Value: !Join [ ",", [ !Ref UdagramPrivateSubnet1, !Ref UdagramPrivateubnet2 ]]
-        Export:
-          Name: !Sub ${EnvironmentName}-PRI-NETS
-
     PublicSubnet1:
         Description: A reference to the public subnet in the 1st Availability Zone
         Value: !Ref UdagramPublicSubnet1
@@ -228,5 +222,25 @@ Outputs:
         Value: !Ref UdagramPublicSubnet2
         Export:
           Name: !Sub ${EnvironmentName}-PUB2-SN
+
+    PrivateSubnets:
+        Description: A list of the private subnets
+        Value: !Join [ ",", [ !Ref UdagramPrivateSubnet1, !Ref UdagramPrivateSubnet2 ]]
+        Export:
+          Name: !Sub ${EnvironmentName}-PRI-NETS
+
+    PrivateSubnet1:
+        Description: A reference to the private subnet in the 1st Availability Zone
+        Value: !Ref UdagramPrivateSubnet1
+        Export:
+          Name: !Sub ${EnvironmentName}-PRI1-SN
+
+    PrivateSubnet2: 
+        Description: A reference to the private subnet in the 2nd Availability Zone
+        Value: !Ref UdagramPrivateSubnet2
+        Export:
+          Name: !Sub ${EnvironmentName}-PRI2-SN
+
+    
 
 
