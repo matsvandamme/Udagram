@@ -243,6 +243,29 @@ Resources:
                 - Key: Name
                   Value: !Ref EnvironmentName
 
+# CLOUD FRONT DISTRIBUTION
+
+    UdagramCloudFront:
+        Type: AWS::CloudFront::Distribution
+        Properties: 
+            DistributionConfig: 
+                DefaultRootObject: index.html
+                Enabled: true
+                PriceClass: PriceClass_100
+                Origins:
+                    - CustomOriginConfig: 
+                        HTTPPort: !Ref ApachePort
+                        OriginProtocolPolicy: http-only
+                      DomainName: Udagr-Udagr-3OVYXD5CCB7B-187814657.us-west-2.elb.amazonaws.com
+                      Id: UdagramCloudfrontDistribution
+                DefaultCacheBehavior:
+                    CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+                    TargetOriginId: !Ref UdagramLoadBalancer
+                    ViewerProtocolPolicy: allow-all
+            Tags:
+                - Key: Name
+                  Value: !Ref EnvironmentName
+
 ######################################################################################
 #                                                                                    #
 #                                      OUTPUTS                                       #
@@ -257,4 +280,8 @@ Outputs:
 
     LoadBalancerDNSName:
             Description: The DNS Name of the load balancer
-            Value: !GetAtt UdagramLoadBalancer.DNSName
+            Value: !Sub http://${UdagramLoadBalancer.DNSName}
+
+    CloudFrontDNSName:
+            Description: The DNS Name of Cloudfront Distribution
+            Value: !Sub http://${UdagramCloudFront.DomainName}
