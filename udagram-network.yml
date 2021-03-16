@@ -237,7 +237,7 @@ Resources:
             DestinationCidrBlock: 0.0.0.0/0
             NatGatewayId: !Ref NatGateway2
 
-    UdagramPrivateSubnet1RouteTableAssociation:
+    UdagramPrivateSubnet2RouteTableAssociation:
         Type: AWS::EC2::SubnetRouteTableAssociation
         Properties:
             RouteTableId: !Ref UdagramPrivateRouteTable2

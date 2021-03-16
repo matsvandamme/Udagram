@@ -247,6 +247,7 @@ Resources:
 
     UdagramCloudFront:
         Type: AWS::CloudFront::Distribution
+        DependsOn: UdagramLoadBalancer
         Properties: 
             DistributionConfig: 
                 DefaultRootObject: index.html
@@ -256,11 +257,11 @@ Resources:
                     - CustomOriginConfig: 
                         HTTPPort: !Ref ApachePort
                         OriginProtocolPolicy: http-only
-                      DomainName: Udagr-Udagr-3OVYXD5CCB7B-187814657.us-west-2.elb.amazonaws.com
-                      Id: UdagramCloudfrontDistribution
+                      DomainName: !GetAtt UdagramLoadBalancer.DNSName
+                      Id: myCustomOrigin
                 DefaultCacheBehavior:
                     CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
-                    TargetOriginId: !Ref UdagramLoadBalancer
+                    TargetOriginId: myCustomOrigin
                     ViewerProtocolPolicy: allow-all
             Tags:
                 - Key: Name
@@ -280,6 +281,10 @@ Outputs:
 
     LoadBalancerDNSName:
             Description: The DNS Name of the load balancer
+            Value: !GetAtt UdagramLoadBalancer.DNSName
+
+    LoadBalancerDNSNameHTTP:
+            Description: The DNS Name of the load balancer with http appended
             Value: !Sub http://${UdagramLoadBalancer.DNSName}
 
     CloudFrontDNSName:
